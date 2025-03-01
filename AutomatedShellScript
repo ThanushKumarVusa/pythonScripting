@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+
+import os
+import pwd
+import grp
+import subprocess
+
+user_name = input("Enter username: ")
+group_name = input("Enter groupname: ")
+
+# Check if the group exists, if not, create it
+try:
+    grp.getgrnam(group_name)
+    print(f"Group '{group_name}' exists, skipping...")
+except KeyError:
+    print(f"Group '{group_name}' doesn't exist, creating it...")
+    try:
+        subprocess.run(["groupadd", group_name], check=True)
+        print(f"Group '{group_name}' created successfully.")
+    except subprocess.CalledProcessError:
+        print(f"Error: Could not create group '{group_name}'. Exiting...")
+        exit(1)
+
+# Check if the user exists, if not, create the user
+try:
+    pwd.getpwnam(user_name)
+    print(f"User '{user_name}' exists, skipping...")
+except KeyError:
+    print(f"User '{user_name}' doesn't exist, creating user and adding to '{group_name}'...")
+    try:
+        subprocess.run(["useradd", "-m", "-G", group_name, user_name], check=True)
+        print(f"User '{user_name}' created and added to group '{group_name}' successfully.")
+    except subprocess.CalledProcessError:
+        print(f"Error: Could not create user '{user_name}'. Exiting...")
+        exit(1)
+
+# Ensure the user is added to the group
+try:
+    subprocess.run(["usermod", "-aG", group_name, user_name], check=True)
+    print(f"User '{user_name}' has been added to group '{group_name}'.")
+except subprocess.CalledProcessError:
+    print(f"Error: Could not add user '{user_name}' to group '{group_name}'.")
+
+
+
